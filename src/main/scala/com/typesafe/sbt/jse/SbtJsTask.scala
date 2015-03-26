@@ -260,7 +260,8 @@ object SbtJsTask extends AutoPlugin {
     val engineProps = SbtJsEngine.engineTypeToProps(
       (engineType in task).value,
       (command in task).value,
-      LocalEngine.nodePathEnv(nodeModulePaths.to[immutable.Seq])
+      LocalEngine.nodePathEnv(nodeModulePaths.to[immutable.Seq]),
+      (commandArgs in task).value
     )
 
     val sources = ((Keys.sources in task in config).value ** ((includeFilter in task in config).value -- (excludeFilter in task in config).value)).get
@@ -385,12 +386,14 @@ object SbtJsTask extends AutoPlugin {
                  nodeModules: Seq[String],
                  shellSource: File,
                  args: Seq[String],
-                 timeout: FiniteDuration
+                 timeout: FiniteDuration,
+                 commandArgs: Seq[String]
                  ): Seq[JsValue] = {
     val engineProps = SbtJsEngine.engineTypeToProps(
       engineType,
       command,
-      LocalEngine.nodePathEnv(nodeModules.to[immutable.Seq])
+      LocalEngine.nodePathEnv(nodeModules.to[immutable.Seq]),
+      commandArgs
     )
 
     withActorRefFactory(state, this.getClass.getName) {

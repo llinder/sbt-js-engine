@@ -21,6 +21,7 @@ object JsEngineImport {
     }
 
     val command = SettingKey[Option[File]]("jse-command", "An optional path to the command used to invoke the engine.")
+    val commandArgs = SettingKey[Seq[String]]("jse-command-args", "Optional arguments to pass to the JS engine command.")
     val engineType = SettingKey[EngineType.Value]("jse-engine-type", "The type of engine to use.")
     val parallelism = SettingKey[Int]("jse-parallelism", "The number of parallel tasks for the JavaScript engine. Defaults to the # of available processors + 1 to keep things busy.")
 
@@ -49,10 +50,10 @@ object SbtJsEngine extends AutoPlugin {
   /**
    * Convert an engine type enum to an actor props.
    */
-  def engineTypeToProps(engineType: EngineType.Value, command: Option[File], env: Map[String, String]) = {
+  def engineTypeToProps(engineType: EngineType.Value, command: Option[File], env: Map[String, String], args: Seq[String] = Nil) = {
     engineType match {
-      case EngineType.CommonNode => CommonNode.props(command, stdEnvironment = env)
-      case EngineType.Node => Node.props(command, stdEnvironment = env)
+      case EngineType.CommonNode => CommonNode.props(command, stdArgs = immutable.Seq(args: _*), stdEnvironment = env)
+      case EngineType.Node => Node.props(command, stdArgs = immutable.Seq(args: _*), stdEnvironment = env)
       case EngineType.PhantomJs => PhantomJs.props(command)
       case EngineType.Javax => JavaxEngine.props()
       case EngineType.Rhino => Rhino.props()
@@ -116,6 +117,7 @@ object SbtJsEngine extends AutoPlugin {
         defaultEngineType
       }),
     command := sys.props.get("sbt.jse.command").map(file),
+    commandArgs := sys.props.get("sbt.jse.commandArgs").map(_.split(" ").toSeq).getOrElse(Nil),
     parallelism := java.lang.Runtime.getRuntime.availableProcessors() + 1,
     npmTimeout := 2.hours
 
